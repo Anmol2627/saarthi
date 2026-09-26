@@ -92,13 +92,16 @@ export async function processUserMessage(
 
         const toolDef = registry.getTool(toolName);
         if (!toolDef) {
-           finalReply = `Sorry, I encountered an internal error. Tool ${toolName} not found.`;
+           finalReply = `Oops! Kuch technical issue aa gaya. Dobara try karein.`;
            break;
         }
 
         // Check if it requires confirmation
         if ((toolDef.riskLevel === "HIGH" || toolDef.riskLevel === "MEDIUM") && !currentState.status.includes("awaiting_confirmation")) {
-           finalReply = `I am ready to execute ${toolName}. Should I proceed?`;
+           // Build natural Hinglish confirmation message based on tool + args
+           const { restaurantId, date, time, partySize } = toolArgs;
+           const restaurantName = restaurantId?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "restaurant";
+           finalReply = `Perfect! Main **${restaurantName}** mein ${partySize} logon ke liye aaj raat ${time} baje table book karne wala hoon. Confirm karein?`;
            currentState = { ...currentState, status: "awaiting_confirmation", selectedOption: toolArgs };
            finalRequiresConfirmation = true;
            finalToolUsed = { name: toolName, args: toolArgs, status: 'pending_confirmation' };
@@ -133,12 +136,12 @@ export async function processUserMessage(
       // Fallback if the LLM gets confused and returns empty text after a tool execution
       if (!finalReply.trim() && finalToolUsed) {
          if (finalToolUsed.name === "check_restaurant_availability") {
-            finalReply = "The slot is available! Should I go ahead and confirm the booking for you?";
+            finalReply = "Slot available hai! Kya main booking confirm kar doon?";
             currentState = { ...currentState, status: "awaiting_confirmation", selectedOption: finalToolUsed.args };
             finalRequiresConfirmation = true;
             finalToolUsed = { ...finalToolUsed, name: "create_reservation", status: 'pending_confirmation' };
          } else {
-            finalReply = `I have completed the action: ${finalToolUsed.name}.`;
+            finalReply = `Kaam ho gaya!`;
          }
       }
       
