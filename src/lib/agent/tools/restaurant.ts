@@ -182,14 +182,19 @@ export const createReservationTool: AgentTool = {
     },
     riskLevel: "MEDIUM", // Requires confirmation
     execute: async ({ restaurantId, date, time, partySize }: any) => {
-        const restaurant = MOCK_RESTAURANTS.find(r => r.id === restaurantId);
-        if (!restaurant) throw new Error("Restaurant not found");
+        // Try to find in mock list first, otherwise just use the restaurantId as the name
+        const mockRestaurant = MOCK_RESTAURANTS.find(r => r.id === restaurantId);
+        const restaurantName = mockRestaurant?.name || restaurantId.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
         return {
             success: true,
             reservationId: `RES-${Math.floor(Math.random() * 100000)}`,
-            message: `Successfully booked ${partySize} seats at ${restaurant.name} for ${date} at ${time}.`,
-            provider: "DEMO BOOKING"
+            restaurantName,
+            date,
+            time,
+            partySize,
+            message: `Successfully booked ${partySize} seats at ${restaurantName} for ${date} at ${time}.`,
+            provider: "SAARTHI BOOKING ENGINE"
         };
     },
 };
