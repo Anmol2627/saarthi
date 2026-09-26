@@ -126,6 +126,18 @@ export async function processUserMessage(
         // We record the last tool used so the UI can render its card if applicable
         finalToolUsed = { name: toolName, args: toolArgs, result: toolResult.result };
         
+        // If availability check passed, immediately trigger booking confirmation
+        // instead of looping back to the LLM (which often returns empty response)
+        if (toolName === "check_restaurant_availability" && toolResult.result?.available) {
+          const { restaurantId, date, time, partySize } = toolArgs;
+          const restaurantName = restaurantId?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "restaurant";
+          finalReply = `Perfect! **${restaurantName}** mein ${time} baje ${partySize} logo ke liye slot available hai. Book kar doon? 🍽️`;
+          currentState = { ...currentState, status: "awaiting_confirmation", selectedOption: toolArgs };
+          finalRequiresConfirmation = true;
+          finalToolUsed = { name: "create_reservation", args: toolArgs, status: "pending_confirmation" };
+          break;
+        }
+        
         // Loop again to let the LLM process the tool result
         continue;
       }
